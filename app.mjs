@@ -1,10 +1,13 @@
 import nodeFetch from "node-fetch";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 import express from "express";
+import cors from "cors";
+
 const app = express();
 const port = 5000;
 
 const startServer = () => {
+  app.use(cors());
 
   app.get("/weather", async (req, res) => {
     try {
@@ -21,7 +24,19 @@ const startServer = () => {
         return retVal;
       });
       const results = await Promise.all(citiesPromises);
-      res.json(results);
+      res.json(
+        results.map((city) =>
+          city.cod === 200
+            ? {
+                name: city.name,
+                temp: city.main.temp,
+                description: city.weather[0].description,
+                humidity: city.main.humidity,
+                windSpeed: city.wind.speed,
+              }
+            : { status: "Error" }
+        )
+      );
     } catch (error) {
       res.status(500).json({ error });
     }
@@ -29,7 +44,7 @@ const startServer = () => {
   app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
   });
- dotenv.config();
+  dotenv.config();
 };
 
 startServer();
